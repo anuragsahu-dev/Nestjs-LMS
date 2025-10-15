@@ -1,0 +1,77 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT // learners
+  TEACHER // Only teaches assigned courses
+  COURSE_MANAGER // Creates & manages courses/batches, can also teach
+  ADMIN // Platform admin: manage users, payments, moderation
+  SUPER_ADMIN // Full system control
+}
+
+model User {
+  id           String  @id @default(uuid())
+  name         String  @db.VarChar(100)
+  email        String  @unique
+  password     String  @db.VarChar(60)
+  role         Role    @default(STUDENT)
+  avatar       String? @default("default-avatar.png")
+  avatarId     String? @db.VarChar(100)
+  bio          String? @db.VarChar(200)
+  refreshToken String? @db.Text
+
+  // 🔹 Email Verification Fields
+  isEmailVerified         Boolean   @default(false)
+  emailVerificationToken  String?   @db.VarChar(100)
+  emailVerificationExpire DateTime?
+
+  // 🔹 Password Reset Fields
+  resetPasswordToken  String?   @db.VarChar(100)
+  resetPasswordExpire DateTime?
+
+  // 🔹 Activity & Timestamps
+  lastActive DateTime? @default(now())
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([email])
+  @@index([role])
+}
+
+/*
+ model User {
+  id                       String          @id @default(uuid())
+  name                     String          @db.VarChar(50)
+  email                    String          @unique
+  password                 String          @db.Text      // hashed passwords
+  role                     Role            @default(STUDENT)
+  avatar                   String?         @default("default-avatar.png")
+  avatarId                 String?         @db.Text
+  bio                      String?         @db.VarChar(200)
+  refreshToken             String?         @db.Text
+
+  isEmailVerified          Boolean         @default(false)
+  emailVerificationToken   String?         @db.Text
+  emailVerificationExpire  DateTime?
+
+  resetPasswordToken       String?         @db.Text
+  resetPasswordExpire      DateTime?
+
+  enrolledCourses          EnrolledCourse[]
+  teachingCourses          Course[]        @relation("CourseTeachers")
+  managedCourses           Course[]        @relation("CourseManagers")
+
+  lastActive               DateTime?       @default(now())
+  createdAt                DateTime        @default(now())
+  updatedAt                DateTime        @updatedAt
+
+  @@index([email])
+  @@index([role])
+}
+*/
