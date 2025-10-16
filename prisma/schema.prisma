@@ -8,70 +8,113 @@ datasource db {
 }
 
 enum Role {
-  STUDENT // learners
-  TEACHER // Only teaches assigned courses
-  COURSE_MANAGER // Creates & manages courses/batches, can also teach
-  ADMIN // Platform admin: manage users, payments, moderation
-  SUPER_ADMIN // Full system control
+  STUDENT
+  TEACHER
+  COURSE_MANAGER
+  ADMIN
+  SUPER_ADMIN
 }
 
 model User {
-  id           String  @id @default(uuid())
-  name         String  @db.VarChar(100)
-  email        String  @unique
-  password     String  @db.VarChar(60)
-  role         Role    @default(STUDENT)
-  avatar       String? @default("default-avatar.png")
-  avatarId     String? @db.VarChar(100)
-  bio          String? @db.VarChar(200)
-  refreshToken String? @db.Text
+  id String @id @default(uuid())
 
-  // 🔹 Email Verification Fields
+  // Basic Info
+  name     String? @db.VarChar(100)
+  email    String? @unique @db.VarChar(320)
+  password String? @db.VarChar(255)
+  avatar   String? @default("default-avatar.png")
+  avatarId String? @db.VarChar(150)
+  bio      String? @db.VarChar(300)
+
+  // Roles
+  role     Role    @default(STUDENT)
+  isActive Boolean @default(true)
+
+  // Multi-auth / Verification
+  googleId        String?   @unique
+  phone           String?   @unique @db.VarChar(15)
+  countryCode     String?   @db.VarChar(5)
+  isPhoneVerified Boolean   @default(false)
+  phoneOtp        String?   @db.VarChar(10)
+  phoneOtpExpire  DateTime?
+
   isEmailVerified         Boolean   @default(false)
   emailVerificationToken  String?   @db.VarChar(100)
   emailVerificationExpire DateTime?
 
-  // 🔹 Password Reset Fields
+  // Password reset
   resetPasswordToken  String?   @db.VarChar(100)
   resetPasswordExpire DateTime?
 
-  // 🔹 Activity & Timestamps
-  lastActive DateTime? @default(now())
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  // Refresh Tokens / Sessions
+  refreshToken String? @db.Text // allowed two devices means make table or array for that
 
-  @@index([email])
+  // Security
+  failedLoginAttempts Int @default(0)
+
+  // Activity Tracking
+  lastLoginAt  DateTime?
+  lastLogoutAt DateTime?
+  lastActive   DateTime? @default(now())
+
+  // Timestamps
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deActivatedAt DateTime?
+
+  // Relations to profiles
+  // studentProfile         StudentProfile?
+  // teacherProfile         TeacherProfile?
+  // courseManager          CourseManager?
+
   @@index([role])
+  @@index([email])
+  @@index([phone])
 }
 
-/*
- model User {
-  id                       String          @id @default(uuid())
-  name                     String          @db.VarChar(50)
-  email                    String          @unique
-  password                 String          @db.Text      // hashed passwords
-  role                     Role            @default(STUDENT)
-  avatar                   String?         @default("default-avatar.png")
-  avatarId                 String?         @db.Text
-  bio                      String?         @db.VarChar(200)
-  refreshToken             String?         @db.Text
+// user schema 
 
-  isEmailVerified          Boolean         @default(false)
-  emailVerificationToken   String?         @db.Text
-  emailVerificationExpire  DateTime?
+/**
+ * refreshToken String? @db.Text // this means no limit in refreshToken
 
-  resetPasswordToken       String?         @db.Text
-  resetPasswordExpire      DateTime?
+ * model StudentProfile {
+ * id                    String   @id @default(uuid())
+ * userId                String   @unique
+ * totalCoursesEnrolled  Int      @default(0)
+ * totalCoursesCompleted Int      @default(0)
+ * totalLearningHours    Int      @default(0)
+ * lastCourseActivityAt  DateTime?
+ * referralCode          String?  @db.VarChar(20)
+ * joinedVia             String?  @db.VarChar(50)
+ * user                  User     @relation(fields: [userId], references: [id])
+ * }
+ * model TeacherProfile {
+ * id               String   @id @default(uuid())
+ * userId           String   @unique
+ * totalCourses     Int      @default(0)
+ * totalStudents    Int      @default(0)
+ * averageRating    Float    @default(0)
+ * specialization   String?  @db.VarChar(200)
+ * experienceYears  Int?
+ * linkedinUrl      String?  @db.VarChar(200)
+ * payoutAccountId  String?  @db.VarChar(100)
+ * user             User     @relation(fields: [userId], references: [id])
+ * }
+ */
 
-  enrolledCourses          EnrolledCourse[]
-  teachingCourses          Course[]        @relation("CourseTeachers")
-  managedCourses           Course[]        @relation("CourseManagers")
+/**
+ * enrolledCourses          EnrolledCourse[]
+ * teachingCourses          Course[]        @relation("CourseTeachers")
+ * managedCourses           Course[]        @relation("CourseManagers")
+ * }
+ */
 
-  lastActive               DateTime?       @default(now())
-  createdAt                DateTime        @default(now())
-  updatedAt                DateTime        @updatedAt
-
-  @@index([email])
-  @@index([role])
-}
-*/
+/**
+ * enum Role {
+ * STUDENT             // learners
+ * TEACHER             // Only teaches assigned courses
+ * COURSE_MANAGER      // Creates & manages courses/batches, can also teach
+ * ADMIN               // Platform admin: manage users, payments, moderation
+ * SUPER_ADMIN         // Full system control
+ * }
+ */
