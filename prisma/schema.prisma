@@ -1,0 +1,125 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  TEACHER
+  COURSE_MANAGER
+  ADMIN
+  SUPER_ADMIN
+}
+
+model User {
+  id String @id @default(uuid())
+
+  // Basic Info
+  name     String? @db.VarChar(100)
+  email    String? @unique @db.VarChar(320)
+  password String? @db.VarChar(255)
+  avatar   String? @default("default-avatar.png")
+  avatarId String? @db.VarChar(150)
+  role     Role    @default(STUDENT)
+
+  // Roles
+
+  isActive      Boolean   @default(true)
+  isDeleted     Boolean   @default(false) // for soft delete
+  deActivatedAt DateTime?
+
+  // Multi-auth / Verification
+  googleId        String?   @unique
+  phone           String?   @unique @db.VarChar(20)
+  countryCode     String?   @db.VarChar(5)
+  isPhoneVerified Boolean   @default(false)
+  phoneOtp        String?   @db.VarChar(10)
+  phoneOtpExpire  DateTime?
+
+  isEmailVerified Boolean   @default(false)
+  emailOtp        String?   @db.VarChar(10)
+  emailOtpExpire  DateTime?
+
+  // Password reset
+  resetPasswordToken  String?   @db.VarChar(100)
+  resetPasswordExpire DateTime?
+
+  // Security
+  failedLoginAttempts Int @default(0)
+
+  // Activity Tracking
+  firstLoginAt DateTime?
+  lastLoginAt  DateTime?
+  loginCount   Int       @default(0)
+  lastLogoutAt DateTime?
+  lastSeenAt   DateTime? @default(now())
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sessions UserSession[]
+
+  @@index([role])
+  @@index([email])
+  @@index([phone])
+}
+
+model UserSession {
+  id           String   @id @default(uuid())
+  userId       String
+  refreshToken String   @db.Text
+  isWeb        Boolean  @default(false)
+  userAgent    String?
+  ipAddress    String?
+  createdAt    DateTime @default(now())
+  expiresAt    DateTime
+  isValid      Boolean  @default(true)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+
+
+// user schema 
+
+// Relations to profiles
+// studentProfile         StudentProfile?
+// teacherProfile         TeacherProfile?
+// courseManager          CourseManager?
+
+/**
+ * model TeacherProfile {
+ * id               String   @id @default(uuid())
+ * userId           String   @unique
+ * totalCourses     Int      @default(0)
+ * totalStudents    Int      @default(0)
+ * averageRating    Float    @default(0)
+ * specialization   String?  @db.VarChar(200)
+ * experienceYears  Int?
+ * linkedinUrl      String?  @db.VarChar(200)
+ * payoutAccountId  String?  @db.VarChar(100)
+ * user             User     @relation(fields: [userId], references: [id])
+ * }
+ */
+
+/**
+ * enrolledCourses          EnrolledCourse[]
+ * teachingCourses          Course[]        @relation("CourseTeachers")
+ * managedCourses           Course[]        @relation("CourseManagers")
+ * }
+ */
+
+/**
+ * enum Role {
+ * STUDENT             // learners
+ * TEACHER             // Only teaches assigned courses
+ * COURSE_MANAGER      // Creates & manages courses/batches, can also teach
+ * ADMIN               // Platform admin: manage users, payments, moderation
+ * SUPER_ADMIN         // Full system control
+ * }
+ */
