@@ -11,4 +11,13 @@ export class UserService {
     });
     return user;
   }
+
+  async createUserWithEmail(email: string) {
+    const user = await this.prisma.user.create({
+      data: {
+        email,
+      },
+    });
+    return user;
+  }
 }

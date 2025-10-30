@@ -33,16 +33,12 @@ model User {
   deActivatedAt DateTime?
 
   // Multi-auth / Verification
-  googleId        String?   @unique
-  phone           String?   @unique @db.VarChar(20)
-  countryCode     String?   @db.VarChar(5)
-  isPhoneVerified Boolean   @default(false)
-  phoneOtp        String?   @db.VarChar(10)
-  phoneOtpExpire  DateTime?
+  googleId        String? @unique
+  phone           String? @unique @db.VarChar(20)
+  countryCode     String? @db.VarChar(5)
+  isPhoneVerified Boolean @default(false)
 
-  isEmailVerified Boolean   @default(false)
-  emailOtp        String?   @db.VarChar(10)
-  emailOtpExpire  DateTime?
+  isEmailVerified Boolean @default(false)
 
   // Password reset
   resetPasswordToken  String?   @db.VarChar(100)
@@ -62,11 +58,36 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  userOtps UserOtp[]
   sessions UserSession[]
 
   @@index([role])
   @@index([email])
   @@index([phone])
+}
+
+enum OtpContext {
+  WEB
+  MOBILE
+}
+
+enum OtpType {
+  EMAIL
+  PHONE
+}
+
+model UserOtp {
+  id        String     @id @default(uuid())
+  userId    String
+  otpType   OtpType
+  otpHash   String     @db.VarChar(255)
+  expiresAt DateTime
+  verified  Boolean    @default(false)
+  context   OtpContext @default(MOBILE)
+  createdAt DateTime   @default(now())
+  email     String?    @db.VarChar(320)
+  phone     String?    @db.VarChar(15)
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model UserSession {
@@ -79,11 +100,8 @@ model UserSession {
   createdAt    DateTime @default(now())
   expiresAt    DateTime
   isValid      Boolean  @default(true)
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
-
-
 
 // user schema 
 
