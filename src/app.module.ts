@@ -5,6 +5,8 @@ import { PrismaModule } from "./prisma/prisma.module";
 import configuration from "./config/configuration";
 import { envValidationSchema } from "./config/env.validation";
 import { UserModule } from './user/user.module';
+import { RedisModule } from './redis/redis.module';
+import { RabbitmqModule } from './rabbitmq/rabbitmq.module';
 
 @Module({
   imports: [
@@ -17,6 +19,8 @@ import { UserModule } from './user/user.module';
     AuthModule,
     PrismaModule,
     UserModule,
+    RedisModule,
+    RabbitmqModule,
   ],
 })
 export class AppModule {}

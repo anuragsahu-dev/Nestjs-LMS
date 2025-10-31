@@ -1,12 +1,13 @@
 import { Injectable } from "@nestjs/common";
 import { UserService } from "../user/user.service";
 import { OtpService } from "./otp/otp.service";
+import { OtpContext, OtpType } from "@prisma/client";
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly userService: UserService,
-    private readonly otpServive: OtpService,
+    private readonly otpService: OtpService,
   ) {}
 
   async continueWithEmail(email: string) {
@@ -15,12 +16,7 @@ export class AuthService {
       user = await this.userService.createUserWithEmail(email);
     }
 
-    // const otp = await this.otpService.createOtp(
-    // user.id,
-    // email,
-    // OtpContext.LOGIN,
-    // OtpType.EMAIL,
-    // );
+    const otp = await this.otpService.createOtp(user.id, email, OtpContext.MOBILE, OtpType.EMAIL);
 
     // 4️⃣ (Optional) Send OTP via Email queue or EmailService (RabbitMQ later)
     // await this.rabbitmqService.sendOtpEmail({ email, otp });

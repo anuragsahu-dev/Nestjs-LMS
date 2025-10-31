@@ -3,23 +3,25 @@ import { PrismaService } from "../../prisma/prisma.service";
 import { OtpContext, OtpType } from "@prisma/client";
 import { randomInt } from "node:crypto";
 import * as argon2 from "argon2";
+import { RedisService } from "../../redis/redis.service";
 
 @Injectable()
 export class OtpService {
   private readonly OTP_EXPIRY_MINUTES = 5;
   private readonly OTP_RESEND_LIMIT_SECONDS = 60;
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly redisService: RedisService,
+  ) {}
 
   async clearExistingOtps(userId: string, context: OtpContext, otpType: OtpType) {
     const redisKey = `otp:${userId}:${context}:${otpType}`;
     const throttleKey = `otp_throttle:${userId}:${context}:${otpType}`;
 
-    // Clear from Redis (if you have Redis integrated)
-    // await this.redis.del(redisKey);
-    // await this.redis.del(throttleKey);
+    await this.redisService.del(redisKey);
+    await this.redisService.del(throttleKey);
 
-    // Clear from database
     await this.prisma.userOtp.deleteMany({
       where: { userId, context, otpType },
     });
@@ -29,8 +31,8 @@ export class OtpService {
     await this.clearExistingOtps(userId, context, otpType);
 
     const throttleKey = `otp_throttle:${userId}:${context}:${otpType}`;
-    // const redisOtp = await this.redis.get(throttleKey);
-    if (false) {
+    const redisOtp = await this.redisService.get(throttleKey);
+    if (redisOtp) {
       throw new BadRequestException("Please wait before requesting another OTP");
     }
 
@@ -40,8 +42,8 @@ export class OtpService {
 
     const redisKey = `otp:${userId}:${context}:${otpType}`;
 
-    // await this.redis.set(redisKey, otpHash, 'EX', this.OTP_EXPIRY_MINUTES * 60);
-    // await this.redis.set(throttleKey, 'true', 'EX', this.OTP_RESEND_LIMIT_SECONDS);
+    await this.redisService.set(redisKey, otpHash, this.OTP_EXPIRY_MINUTES * 60);
+    await this.redisService.set(throttleKey, "true", this.OTP_RESEND_LIMIT_SECONDS);
 
     await this.prisma.userOtp.deleteMany({
       where: { userId, context, otpType },
