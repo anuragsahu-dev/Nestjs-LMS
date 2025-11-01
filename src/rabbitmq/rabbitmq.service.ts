@@ -11,7 +11,7 @@ export class RabbitmqService implements OnModuleInit, OnModuleDestroy {
   constructor(private readonly configService: ConfigService) {}
 
   async onModuleInit() {
-    const url = this.configService.get<string>("rabbitmq.url");
+    const url = this.configService.getOrThrow<string>("rabbitmq.url");
 
     this.connection = amqp.connect([url]);
 
@@ -32,7 +32,7 @@ export class RabbitmqService implements OnModuleInit, OnModuleDestroy {
   }
 
   // Send to specific queue directly
-  async sendToQueue(queue: string, message: any) {
+  async sendToQueue(queue: string, message: unknown) {
     await this.channelWrapper.addSetup((channel: Channel) =>
       channel.assertQueue(queue, { durable: true }),
     );
@@ -44,17 +44,17 @@ export class RabbitmqService implements OnModuleInit, OnModuleDestroy {
   }
 
   // Publish to an exchange with routing key
-  async publish(exchange: string, routingKey: string, message: any) {
+  async publish(exchange: string, routingKey: string, message: unknown) {
     const options: Options.Publish = { persistent: true };
     await this.channelWrapper.publish(exchange, routingKey, message, options);
   }
 
   // Consume from queue
-  async consume(
+  async consume<T>(
     queue: string,
     exchange: string,
     routingKey: string,
-    handler: (msg: any) => Promise<void>,
+    handler: (msg: T) => Promise<void>,
   ) {
     await this.channelWrapper.addSetup(async (channel: Channel) => {
       await channel.assertExchange(exchange, "topic", { durable: true });
@@ -64,7 +64,7 @@ export class RabbitmqService implements OnModuleInit, OnModuleDestroy {
       await channel.consume(queue, async (msg) => {
         if (!msg) return;
         try {
-          const content = JSON.parse(msg.content.toString());
+          const content = JSON.parse(msg.content.toString()) as T;
           await handler(content);
           channel.ack(msg);
         } catch (err) {

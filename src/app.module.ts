@@ -7,6 +7,8 @@ import { envValidationSchema } from "./config/env.validation";
 import { UserModule } from './user/user.module';
 import { RedisModule } from './redis/redis.module';
 import { RabbitmqModule } from './rabbitmq/rabbitmq.module';
+import { EmailModule } from './email/email.module';
+import { OtpModule } from './otp/otp.module';
 
 @Module({
   imports: [
@@ -21,6 +23,8 @@ import { RabbitmqModule } from './rabbitmq/rabbitmq.module';
     UserModule,
     RedisModule,
     RabbitmqModule,
+    EmailModule,
+    OtpModule,
   ],
 })
 export class AppModule {}

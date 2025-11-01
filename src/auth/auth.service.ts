@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { UserService } from "../user/user.service";
-import { OtpService } from "./otp/otp.service";
+import { OtpService } from "../otp/otp.service";
 import { OtpContext, OtpType } from "@prisma/client";
 
 @Injectable()
@@ -15,6 +15,10 @@ export class AuthService {
     if (!user) {
       user = await this.userService.createUserWithEmail(email);
     }
+
+    // clear existing otps
+
+    await this.otpService.clearExistingOtps(user.id, OtpContext.MOBILE);
 
     const otp = await this.otpService.createOtp(user.id, email, OtpContext.MOBILE, OtpType.EMAIL);
 

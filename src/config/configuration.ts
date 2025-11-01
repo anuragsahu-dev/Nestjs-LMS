@@ -33,4 +33,7 @@ export default () => ({
     clientSecret: getEnvVariable("GOOGLE_CLIENT_SECRET"),
     callbackUrl: getEnvVariable("GOOGLE_CALLBACK_URL"),
   },
+  rabbitmq: {
+    url: getEnvVariable("RABBITMQ_URL")
+  }
 });

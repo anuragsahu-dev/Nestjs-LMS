@@ -31,4 +31,6 @@ export const envValidationSchema = Joi.object({
   GOOGLE_CALLBACK_URL: Joi.string()
     .uri({ scheme: ["http", "https"] })
     .required(),
+    
+  RABBITMQ_URL: Joi.string().uri({scheme: ["amqp"]}).required()
 });
